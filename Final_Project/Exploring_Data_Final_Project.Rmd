@@ -1,0 +1,248 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+```{r}
+
+library(dplyr)
+library(tidyverse)
+setwd("~/desktop")
+data<-read_csv("heart 2.csv")
+
+head(data)
+summary(data)
+nrow(data)
+```
+
+```{r}
+data$Sex<-as.factor(data$Sex)
+head(data)
+data$ChestPainType<-as.factor(data$ChestPainType)
+head(data)
+data$RestingECG<-as.factor(data$RestingECG)
+head(data)
+data$FastingBS<-as.factor(data$FastingBS)
+head(data)
+data$ExerciseAngina<-as.factor(data$ExerciseAngina)
+head(data)
+data$ST_Slope<-as.factor(data$ST_Slope)
+head(data)
+data$HeartDisease<-as.factor(data$HeartDisease)
+head(data)
+levels(data$FastingBS)
+levels(data$RestingECG)
+levels(data$Sex)
+levels(data$ChestPainType)
+levels(data$ExerciseAngina)
+levels(data$ST_Slope)
+levels(data$HeartDisease)
+```
+
+
+```{r}
+head(data)
+sum(is.na(data))
+data<-data %>% mutate(Sex = recode(Sex, "F" = "0", "M" = "1"))
+head(data)
+data<-data %>% mutate(RestingECG = recode(RestingECG, "LVH" = "0", "Normal" = "1", "ST"="2"))
+head(data)
+data<-data %>% mutate(ChestPainType = recode(ChestPainType, "ASY" = "0", "ATA" = "1", "NAP"="2","TA"="3"))
+head(data)
+data<-data %>% mutate(ExerciseAngina = recode(ExerciseAngina, "N" = "0", "Y" = "1"))
+head(data)
+data<-data %>% mutate(ST_Slope = recode(ST_Slope, "Down" = "0", "Flat" = "1", "Up"="2"))
+head(data)
+```
+
+```{r}
+data %>% ggplot(aes(x=HeartDisease, y=Age))+ geom_boxplot() + scale_x_discrete(labels=c("Normal", "Heart Disease")) +xlab("Heart Disease")+ylab("Age")+ggtitle("Boxplot of Heart Disease by Age")
+
+
+
+```
+
+```{r}
+
+data %>% ggplot(aes(x=HeartDisease, y=Cholesterol))+ geom_boxplot() + scale_x_discrete(labels=c("Normal", "Heart Disease")) +xlab("Heart Disease")+ylab("Cholestrol Level")+ggtitle("Boxplot of Heart Disease by Cholesterol Level")
+```
+
+```{r}
+
+data %>% ggplot(aes(x=HeartDisease, y=RestingBP))+ geom_boxplot() + scale_x_discrete(labels=c("Normal", "Heart Disease")) +xlab("Heart Disease")+ylab("Resting BP Level")+ggtitle("Boxplot of Heart Disease by Blood Pressure Level")
+```
+
+```{r}
+
+data %>% ggplot(aes(x=HeartDisease, y=MaxHR))+ geom_boxplot() + scale_x_discrete(labels=c("Normal", "Heart Disease")) +xlab("Heart Disease")+ylab("Max Heart Rate")+ggtitle("Boxplot of Heart Disease by Heart Rate")
+```
+
+```{r}
+data %>% ggplot(aes(x=HeartDisease,fill=Sex))+geom_bar()+scale_x_discrete(labels=c("Normal", "Heart Disease")) +scale_fill_discrete(name = "Gender", labels = c("Female", "Male"))
+
+
+```
+
+```{r}
+data %>% ggplot(aes(x=Age, y=Cholesterol,color=HeartDisease))+geom_point()+scale_color_discrete(name='Heart Disease', labels=c("Normal", "Heart Disease"))
+
+
+```
+
+```{r}
+data2<-data
+set.seed(5)
+#splitting data into train and test data
+train_idx <- sample(1:nrow(data),0.70*nrow(data),replace=FALSE)
+train <- data[train_idx,]
+test <- data[-train_idx,]
+nrow(train)
+nrow(test)
+
+
+```
+
+
+
+```{r}
+logistic<-glm(HeartDisease~., data=train, family=binomial(link="logit"))
+exp(coef(logistic))
+summary(logistic)
+log.predict <- predict(logistic, test, type="response")
+
+
+```
+
+
+
+```{r}
+#install.packages("InformationValue")
+library(InformationValue)
+
+
+
+misClassError(test$HeartDisease, log.predict)
+table<-confusionMatrix(test$HeartDisease, log.predict)
+
+accuracy<-(88+142)/(88+15+31+142)
+accuracy
+
+
+```
+```{r}
+library(rpart)
+library("rpart.plot")
+dt<-rpart(HeartDisease~., data=train,method='class')
+rpart.plot(dt)
+
+
+
+```
+
+
+
+```{r}
+dt.predict <-predict(dt, test, type="class")
+table_mat <- table(test$HeartDisease, dt.predict)
+table_mat
+
+accuracy_Test <- sum(diag(table_mat)) / sum(table_mat)
+accuracy_Test
+
+
+
+
+
+```
+
+
+
+```{r}
+#head(data)
+
+
+#subset_test<-data2[c('Age','Sex','ChestPainType','RestingBP','Cholesterol','FastingBS','RestingECG','MaxHR', 'ExerciseAngina','Oldpeak','ST_Slope')]
+
+#install.packages('class')
+# Load class package
+library(class)
+data2$Sex<-as.integer(data2$Sex)
+head(data2)
+data2$ChestPainType<-as.integer(data2$ChestPainType)
+head(data2)
+data2$RestingECG<-as.integer(data2$RestingECG)
+head(data2)
+data2$FastingBS<-as.factor(data2$FastingBS)
+head(data2)
+data2$ExerciseAngina<-as.integer(data2$ExerciseAngina)
+head(data2)
+data2$ST_Slope<-as.integer(data2$ST_Slope)
+head(data2)
+data2$HeartDisease<-as.factor(data2$HeartDisease)
+data2$FastingBS<-as.integer(data2$FastingBS)
+data2$HeartDisease<-as.integer(data2$HeartDisease)
+head(data2)
+subset<-data2[c('Age','Sex','ChestPainType','RestingBP','Cholesterol','FastingBS','RestingECG','MaxHR', 'ExerciseAngina','Oldpeak','ST_Slope','HeartDisease')]
+normalize <- function(x) {
+return ((x - min(x)) / (max(x) - min(x))) }
+subset.n <- as.data.frame(lapply(subset[,1:11], normalize))
+
+head(subset.n)
+
+
+
+```
+
+
+
+```{r}
+
+dat.d <- sample(1:nrow(subset.n),size=nrow(subset.n)*0.7,replace = FALSE)
+trainknn <- subset[dat.d,] # 70% training data
+testknn <- subset[-dat.d,] # remaining 30% test data
+
+train.labels <- subset[dat.d,12]
+test.labels <-subset[-dat.d,12]
+train.labels<-as.data.frame(train.labels)
+test.labels<-as.data.frame(test.labels)
+trainknn <-as.data.frame(trainknn)
+testknn <-as.data.frame(testknn)
+k<-nrow(train.labels)
+sqrt(k)
+
+```
+```{r}
+nrow(trainknn)
+nrow(train.labels)
+
+
+```
+```{r}
+
+knn <- knn(train=trainknn, test=testknn, cl=train.labels$HeartDisease, k=26)
+table<-table(knn ,test.labels$HeartDisease)
+accuracy<-sum(diag(table))/sum(table)
+accuracy
+
+```
+
+
+
+
+
+
+
+
+```{r}
+set.seed(250)
+library(randomForest)
+rf <-randomForest(HeartDisease~.,data=train, ntree=500,mtry=11, importance=TRUE)
+rf.predict <-predict(rf, test, type="class")
+table_mat <- table(test$HeartDisease, rf.predict)
+table_mat
+
+accuracy_Test <- sum(diag(table_mat)) / sum(table_mat)
+accuracy_Test
+varImpPlot(rf, type=1)
+
+```
